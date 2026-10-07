@@ -1,45 +1,108 @@
-# Wine Quality Screening App
+# Wine Quality Analytics: Screening Model \& Streamlit App
 
-Interactive Streamlit app built on the Wine Quality case study (Random Forest). Enter the laboratory profile of a
-*Vinho Verde* wine and the app returns a model score and a screening decision (send to sensory panel or routine),
-with an adjustable threshold that shows the workload-vs-coverage trade-off.
+**Can laboratory measurements help a winery decide which batches deserve a full sensory evaluation?**
 
-## Project structure
+This project analyses the physicochemical profile of *Vinho Verde* red and white wines and builds a **screening model** (Random Forest) that flags batches likely to be rated high quality by a tasting panel. The model is delivered as a reproducible notebook and as an interactive **Streamlit app** packaged with **Docker**.
 
-```
-.
-├── app.py            # Streamlit interface
-├── core.py           # shared constants and helpers
-├── train_model.py    # trains the model and saves model/wine_rf.joblib
-├── data/             # winequality-red.csv, winequality-white.csv
-├── requirements.txt
-├── Dockerfile
-└── .dockerignore
-```
+## 
 
-## Run with Docker
+## Key results
+
+||Threshold 0.50|Screening threshold 0.29|
+|-|-|-|
+|Batches sent to the sensory panel|24%|44%|
+|High-quality wines found (recall)|66%|**89%**|
+|Precision of flagged batches|52%|38%|
+
+* **Screening value:** reviewing 44% of batches finds 89% of the high-quality wines, versus 44% if the same number of batches were chosen at random.
+* **Model quality:** PR-AUC 0.63 against a no-skill baseline of 0.19; ROC-AUC 0.87 (held-out test set).
+* The threshold was chosen on **training data only** (F2 score, which weights recall twice as much as precision, assuming that missing a high-quality batch costs more than an extra tasting). In a real setting it should be set from actual costs.
+
+## Main findings
+
+* **Alcohol is the variable most associated with quality** (Spearman ρ = +0.48; large effect size, η²ₕ = 0.24). Density (0.13), chlorides (0.10) and volatile acidity (0.07) follow, all medium effects.
+* **Density is partly a proxy**: alcohol and residual sugar explain 56% of its variance, so it should be read as a convenient routine indicator, not an independent factor.
+* **Volatile acidity** (mainly acetic acid) is negatively associated with quality, which is consistent with its role as a marker of spoilage or fermentation problems.
+* **Domain-informed features did not help prediction**: molecular SO₂ (computed from free SO₂ and pH) and the free/total SO₂ ratio changed cross-validated PR-AUC by only +0.001. The Random Forest already captures that interaction from the original variables.
+
+## Visuals
+
+|Association with quality|Model performance|
+|-|-|
+|!\[Spearman correlation with quality](notebooks/figures/04\_spearman\_with\_quality.png)|!\[ROC and PR curves](notebooks/figures/09\_roc\_pr\_curves.png)|
+
+|Threshold selection|Confusion matrices|
+|-|-|
+|!\[Threshold selection](notebooks/figures/10\_threshold\_selection.png)|!\[Confusion matrices](notebooks/figures/11\_confusion\_matrices.png)|
+
+## Approach
+
+1. **Data audit:** missing values, chemical plausibility checks (e.g. free SO₂ cannot exceed total SO₂) and outliers. 5,320 unique wines analysed (1,359 red, 3,961 white) after removing repeated records.
+2. **Exploratory analysis:** red vs. white comparison with effect sizes (Cliff's delta), Spearman correlations (overall and by type), multicollinearity (VIF) and a check of density against alcohol and sugar.
+3. **Statistics:** Kruskal-Wallis across low/medium/high quality segments with FDR correction and η²ₕ effect sizes, repeated within each wine type to check robustness.
+4. **Modelling:** no-skill baseline, Logistic Regression and Random Forest (tuned with randomized search on training data only); stratified split by target and wine type; ROC-AUC and PR-AUC; threshold analysis; cross-validation.
+5. **Interpretation:** impurity-based and permutation importance, discussed with the underlying enology.
+6. **Deployment:** Streamlit app with chemical input validation, containerised with Docker.
+
+## Run the app
+
+**With Docker**
 
 ```bash
 docker build -t wine-quality-app .
 docker run --rm -p 8501:8501 wine-quality-app
 ```
 
-Open http://localhost:8501
+Open http://localhost:8501. The model is trained while the image is built.
 
-## Run locally
+**Locally**
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate        # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-python train_model.py
+python train\_model.py
 streamlit run app.py
 ```
 
-## Notes
+## Run the notebook
 
-- Hyperparameters are set in `RF_PARAMS` inside `train_model.py` (taken from the notebook's tuned model).
-- The model score is a ranking score, not a calibrated probability.
-- The app shows statistical associations from a historical dataset; it does not replace sensory evaluation.
+```bash
+pip install -r requirements.txt statsmodels seaborn matplotlib scipy jupyter
+jupyter notebook notebooks/Wine\_Quality\_Analytics\_RF.ipynb
+```
 
-Data: Cortez et al. (2009), UCI Machine Learning Repository (CC BY 4.0).
+The notebook reads the CSV files from `data/`.
+
+## Repository structure
+
+```
+.
+├── notebooks/
+│   ├── Wine\_Quality\_Analytics\_RF.ipynb   # full analysis
+│   └── figures/                          # charts generated by the notebook
+├── data/                                 # winequality-red.csv, winequality-white.csv
+├── app.py                                # Streamlit interface
+├── core.py                               # shared constants and helpers
+├── train\_model.py                        # trains the final model for the app
+├── requirements.txt
+├── Dockerfile
+└── README.md
+```
+
+## Limitations
+
+* Observational data: the analysis identifies **associations**, not causal effects. Moving a slider in the app shows how the model responds, not how a real wine would change.
+* Quality is a subjective, ordinal score (median of at least three tasters); "high quality" (score ≥ 7) is an analytical definition.
+* One region and period (*Vinho Verde*), with no information on grape variety, vintage or producer.
+* Correlated predictors (alcohol, sugar, density) share importance.
+* The model score is a ranking score, not a calibrated probability.
+
+## Data and citation
+
+Cortez, P., Cerdeira, A., Almeida, F., Matos, T., Reis, J. (2009). *Modeling wine preferences by data mining from physicochemical properties.* Decision Support Systems, 47(4), 547-553. Dataset from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/186/wine+quality), licensed under CC BY 4.0.
+
+## Author
+
+**Ramón Figueroa M.**, Biochemical Engineer transitioning into data analytics. [LinkedIn](LINKEDIN_URL_HERE)
+
