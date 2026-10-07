@@ -11,8 +11,9 @@ MODEL_PATH = Path("model/wine_rf.joblib")
 st.set_page_config(page_title="Wine Quality Screening", page_icon="🍷", layout="wide")
 
 if not MODEL_PATH.exists():
-    st.error("Model file not found. Run `python train_model.py` first.")
-    st.stop()
+    with st.spinner("Training the model for the first time (about a minute)..."):
+        from train_model import main as train_model
+        train_model()
 
 
 @st.cache_resource
