@@ -4,6 +4,7 @@
 
 This project analyses the physicochemical profile of *Vinho Verde* red and white wines and builds a **screening model** (Random Forest) that flags batches likely to be rated high quality by a tasting panel. The model is delivered as a reproducible notebook and as an interactive **Streamlit app** packaged with **Docker**.
 
+Links: [Live app](https://wine-quality-screening.streamlit.app/)
 ## 
 
 ## Key results
