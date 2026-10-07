@@ -27,13 +27,13 @@ This project analyses the physicochemical profile of *Vinho Verde* red and white
 
 ## Visuals
 
-|Association with quality|Model performance|
-|-|-|
-|!\[Spearman correlation with quality](notebooks/figures/04\_spearman\_with\_quality.png)|!\[ROC and PR curves](notebooks/figures/09\_roc\_pr\_curves.png)|
+| Association with quality | Model performance |
+|---|---|
+| ![Spearman correlation with quality](notebooks/figures/04_spearman_with_quality.png) | ![ROC and PR curves](notebooks/figures/09_roc_pr_curves.png) |
 
-|Threshold selection|Confusion matrices|
-|-|-|
-|!\[Threshold selection](notebooks/figures/10\_threshold\_selection.png)|!\[Confusion matrices](notebooks/figures/11\_confusion\_matrices.png)|
+| Threshold selection | Confusion matrices |
+|---|---|
+| ![Threshold selection](notebooks/figures/10_threshold_selection.png) | ![Confusion matrices](notebooks/figures/11_confusion_matrices.png) |
 
 ## Approach
 
